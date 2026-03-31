@@ -38,6 +38,7 @@
     "dev": "ray develop",
     "fix-lint": "ray lint --fix",
     "lint": "ray lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "install-hooks": "bash install.sh"
   }
 }
