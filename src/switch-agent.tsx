@@ -234,7 +234,7 @@ export default function Command() {
   const instances = loadInstances();
 
   return (
-    <List>
+    <List isShowingDetail>
       {instances.length === 0 ? (
         <List.EmptyView
           title="No Claude instances running"
@@ -244,33 +244,92 @@ export default function Command() {
         instances.map((instance) => {
           const added = instance.lines_added ?? 0;
           const removed = instance.lines_removed ?? 0;
-          const hasLines = added > 0 || removed > 0;
           const contextPct = instance.context_percent ?? 0;
+          const activity = loadRecentActivity(instance.cwd, instance.session_id);
 
           return (
             <List.Item
               key={instance.session_id}
-              title={instance.custom_name || instance.prompt || projectName(instance.cwd)}
-              subtitle={instance.cwd?.split("/").slice(-2).join("/")}
+              title={instance.custom_name || projectName(instance.cwd)}
+              subtitle={instance.custom_name ? projectName(instance.cwd) : undefined}
               icon={statusIcon(instance.status)}
               accessories={[
-                ...(instance.model ? [{ tag: instance.model }] : []),
-                {
-                  text: {
-                    value: `+${added}`,
-                    color: hasLines ? Color.Green : Color.SecondaryText,
-                  },
-                },
-                {
-                  text: {
-                    value: `-${removed}`,
-                    color: hasLines ? Color.Red : Color.SecondaryText,
-                  },
-                },
-                { text: `${contextPct}%`, tooltip: "Context usage" },
-                { icon: modeIcon(instance.permission_mode) },
-                { text: timeAgo(instance.updated_at), tooltip: instance.updated_at },
+                { text: timeAgo(instance.updated_at) },
               ]}
+              detail={
+                <List.Item.Detail
+                  metadata={
+                    <List.Item.Detail.Metadata>
+                      {instance.custom_name && (
+                        <List.Item.Detail.Metadata.Label
+                          title="Name"
+                          text={instance.custom_name}
+                        />
+                      )}
+                      {instance.prompt && (
+                        <List.Item.Detail.Metadata.Label
+                          title="Prompt"
+                          text={instance.prompt}
+                        />
+                      )}
+                      <List.Item.Detail.Metadata.Label
+                        title="Status"
+                        text={instance.status ? instance.status.charAt(0).toUpperCase() + instance.status.slice(1) : "Unknown"}
+                        icon={statusIcon(instance.status)}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Model"
+                        text={instance.model ?? "unknown"}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Mode"
+                        text={modeLabel(instance.permission_mode)}
+                        icon={modeIcon(instance.permission_mode)}
+                      />
+                      <List.Item.Detail.Metadata.Separator />
+                      <List.Item.Detail.Metadata.TagList title="Edits">
+                        <List.Item.Detail.Metadata.TagList.Item text={`+${added}`} color={Color.Green} />
+                        <List.Item.Detail.Metadata.TagList.Item text={`-${removed}`} color={Color.Red} />
+                      </List.Item.Detail.Metadata.TagList>
+                      <List.Item.Detail.Metadata.TagList title="Context">
+                        <List.Item.Detail.Metadata.TagList.Item
+                          text={`${contextPct}%`}
+                          color={contextPct >= 80 ? Color.Red : contextPct >= 60 ? Color.Orange : Color.SecondaryText}
+                        />
+                      </List.Item.Detail.Metadata.TagList>
+                      {activity && activity.recentTools.length > 0 && (
+                        <>
+                          <List.Item.Detail.Metadata.Separator />
+                          <List.Item.Detail.Metadata.TagList title="Recent Tools">
+                            {activity.recentTools.map((tool, i) => (
+                              <List.Item.Detail.Metadata.TagList.Item key={i} text={tool} color={Color.Blue} />
+                            ))}
+                          </List.Item.Detail.Metadata.TagList>
+                        </>
+                      )}
+                      {activity?.lastResponse && (
+                        <List.Item.Detail.Metadata.Label
+                          title="Last Response"
+                          text={activity.lastResponse}
+                        />
+                      )}
+                      <List.Item.Detail.Metadata.Separator />
+                      <List.Item.Detail.Metadata.Label
+                        title="Working Directory"
+                        text={instance.cwd ?? "unknown"}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Last Active"
+                        text={instance.updated_at ? new Date(instance.updated_at).toLocaleString() : "unknown"}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Session"
+                        text={instance.session_id}
+                      />
+                    </List.Item.Detail.Metadata>
+                  }
+                />
+              }
               actions={
                 <ActionPanel>
                   <Action
