@@ -13,11 +13,15 @@ type ExtensionPreferences = {}
 declare type Preferences = ExtensionPreferences
 
 declare namespace Preferences {
+  /** Preferences accessible in the `switch-agent` command */
+  export type SwitchAgent = ExtensionPreferences & {}
   /** Preferences accessible in the `index` command */
   export type Index = ExtensionPreferences & {}
 }
 
 declare namespace Arguments {
+  /** Arguments passed to the `switch-agent` command */
+  export type SwitchAgent = {}
   /** Arguments passed to the `index` command */
   export type Index = {}
 }

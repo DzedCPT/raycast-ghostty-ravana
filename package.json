@@ -8,6 +8,12 @@
   "license": "MIT",
   "commands": [
     {
+      "name": "switch-agent",
+      "title": "Switch Agent",
+      "description": "List Claude Code sessions and jump to their Ghostty terminal",
+      "mode": "view"
+    },
+    {
       "name": "index",
       "title": "Open Zed in Ghostty Dir",
       "description": "Open Zed in the working directory of the active Ghostty pane",
