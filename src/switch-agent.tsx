@@ -22,7 +22,7 @@ interface ClaudeInstance {
   context_percent?: number;
   pid?: number;
   permission_mode?: string;
-  auto_name?: string;
+  prompt?: string;
   custom_name?: string;
   terminal?: string;
   updated_at?: string;
@@ -112,7 +112,7 @@ function loadInstances(): ClaudeInstance[] {
               const merged = { ...hook, ...metrics };
               merged.status = hook.status;
               merged.permission_mode = hook.permission_mode;
-              merged.auto_name = hook.auto_name;
+              merged.prompt = hook.prompt;
               merged.custom_name = hook.custom_name;
               Object.assign(hook, merged);
             }
@@ -170,7 +170,7 @@ export default function Command() {
           return (
             <List.Item
               key={instance.session_id}
-              title={instance.custom_name || instance.auto_name || projectName(instance.cwd)}
+              title={instance.custom_name || instance.prompt || projectName(instance.cwd)}
               subtitle={instance.cwd?.split("/").slice(-2).join("/")}
               icon={statusIcon(instance.status)}
               accessories={[
