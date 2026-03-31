@@ -9,8 +9,8 @@
   "commands": [
     {
       "name": "index",
-      "title": "Agent Ghostty",
-      "description": "Agent Ghostty",
+      "title": "Open Zed in Ghostty Dir",
+      "description": "Open Zed in the working directory of the active Ghostty pane",
       "mode": "no-view"
     }
   ],
