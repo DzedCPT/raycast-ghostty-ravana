@@ -7,8 +7,9 @@ import {
   closeMainWindow,
 } from "@raycast/api";
 import { execSync } from "child_process";
-import { readdirSync, readFileSync, unlinkSync } from "fs";
+import { existsSync, readdirSync, readFileSync, unlinkSync } from "fs";
 import { join } from "path";
+import { homedir } from "os";
 
 const STATE_DIR = "/tmp/claude-instances";
 
@@ -147,6 +148,70 @@ function loadInstances(): ClaudeInstance[] {
     });
   } catch {
     return [];
+  }
+}
+
+interface RecentActivity {
+  recentTools: string[];
+  lastResponse: string;
+}
+
+function jsonlPath(cwd?: string, sessionId?: string): string | null {
+  if (!cwd || !sessionId) return null;
+  const projectDir = cwd.replace(/\//g, "-");
+  const path = join(homedir(), ".claude", "projects", projectDir, `${sessionId}.jsonl`);
+  return existsSync(path) ? path : null;
+}
+
+function loadRecentActivity(cwd?: string, sessionId?: string): RecentActivity | null {
+  const path = jsonlPath(cwd, sessionId);
+  if (!path) return null;
+
+  try {
+    // Read last ~50KB to get recent entries
+    const content = readFileSync(path, "utf-8");
+    const lines = content.split("\n").filter((l) => l.trim());
+    const tail = lines.slice(-40);
+
+    const recentTools: string[] = [];
+    let lastResponse = "";
+
+    for (const line of tail) {
+      try {
+        const obj = JSON.parse(line);
+        const msg = obj.message;
+        if (!msg) continue;
+
+        if (msg.role === "assistant" && Array.isArray(msg.content)) {
+          for (const block of msg.content) {
+            if (block.type === "tool_use") {
+              const name = block.name as string;
+              const input = block.input as Record<string, unknown>;
+              let detail = name;
+              if (name === "Edit" || name === "Read" || name === "Write") {
+                const fp = input.file_path as string | undefined;
+                if (fp) detail = `${name}: ${fp.split("/").pop()}`;
+              } else if (name === "Bash") {
+                const cmd = input.command as string | undefined;
+                if (cmd) detail = `Bash: ${cmd.slice(0, 40)}`;
+              }
+              recentTools.push(detail);
+            } else if (block.type === "text" && block.text) {
+              lastResponse = (block.text as string).slice(0, 200);
+            }
+          }
+        }
+      } catch {
+        /* skip malformed lines */
+      }
+    }
+
+    return {
+      recentTools: recentTools.slice(-5),
+      lastResponse,
+    };
+  } catch {
+    return null;
   }
 }
 
