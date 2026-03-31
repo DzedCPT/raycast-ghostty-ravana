@@ -307,11 +307,15 @@ export default function Command() {
                         </>
                       )}
                       {activity && activity.recentTools.length > 0 && (
-                        <List.Item.Detail.Metadata.TagList title="Recent Tools">
+                        <>
                           {activity.recentTools.map((tool, i) => (
-                            <List.Item.Detail.Metadata.TagList.Item key={i} text={tool} color={Color.SecondaryText} />
+                            <List.Item.Detail.Metadata.Label
+                              key={i}
+                              title={i === 0 ? "Recent Tools" : ""}
+                              text={tool}
+                            />
                           ))}
-                        </List.Item.Detail.Metadata.TagList>
+                        </>
                       )}
                       <List.Item.Detail.Metadata.Separator />
                       <List.Item.Detail.Metadata.Label
