@@ -297,21 +297,21 @@ export default function Command() {
                           color={contextPct >= 80 ? Color.Red : contextPct >= 60 ? Color.Orange : Color.SecondaryText}
                         />
                       </List.Item.Detail.Metadata.TagList>
-                      {activity && activity.recentTools.length > 0 && (
+                      {activity?.lastResponse && (
                         <>
                           <List.Item.Detail.Metadata.Separator />
-                          <List.Item.Detail.Metadata.TagList title="Recent Tools">
-                            {activity.recentTools.map((tool, i) => (
-                              <List.Item.Detail.Metadata.TagList.Item key={i} text={tool} color={Color.Blue} />
-                            ))}
-                          </List.Item.Detail.Metadata.TagList>
+                          <List.Item.Detail.Metadata.Label
+                            title="Last Response"
+                            text={activity.lastResponse}
+                          />
                         </>
                       )}
-                      {activity?.lastResponse && (
-                        <List.Item.Detail.Metadata.Label
-                          title="Last Response"
-                          text={activity.lastResponse}
-                        />
+                      {activity && activity.recentTools.length > 0 && (
+                        <List.Item.Detail.Metadata.TagList title="Recent Tools">
+                          {activity.recentTools.map((tool, i) => (
+                            <List.Item.Detail.Metadata.TagList.Item key={i} text={tool} color={Color.SecondaryText} />
+                          ))}
+                        </List.Item.Detail.Metadata.TagList>
                       )}
                       <List.Item.Detail.Metadata.Separator />
                       <List.Item.Detail.Metadata.Label
