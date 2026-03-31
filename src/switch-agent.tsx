@@ -150,6 +150,21 @@ function loadInstances(): ClaudeInstance[] {
   }
 }
 
+function modeLabel(mode?: string): string {
+  switch (mode) {
+    case "acceptEdits":
+      return "Accept Edits";
+    case "plan":
+      return "Plan";
+    case "dontAsk":
+      return "Don't Ask";
+    case "bypassPermissions":
+      return "Bypass Permissions";
+    default:
+      return mode ?? "Unknown";
+  }
+}
+
 export default function Command() {
   const instances = loadInstances();
 
