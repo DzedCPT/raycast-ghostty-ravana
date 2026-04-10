@@ -30,6 +30,22 @@ function statusIcon(status?: string): { source: Icon; tintColor: Color } {
   }
 }
 
+function terminalLabel(terminal?: string): string {
+  switch (terminal) {
+    case "ghostty": return "Ghostty";
+    case "zed": return "Zed";
+    default: return terminal ?? "Unknown";
+  }
+}
+
+function terminalIcon(terminal?: string): { source: Icon; tintColor: Color } {
+  switch (terminal) {
+    case "ghostty": return { source: Icon.Terminal, tintColor: Color.Purple };
+    case "zed": return { source: Icon.Code, tintColor: Color.Blue };
+    default: return { source: Icon.QuestionMarkCircle, tintColor: Color.SecondaryText };
+  }
+}
+
 function modeIcon(mode?: string): { source: Icon; tintColor: Color } {
   switch (mode) {
     case "acceptEdits":
@@ -69,7 +85,8 @@ export default function Command() {
               subtitle={instance.custom_name ? projectName(instance.cwd) : undefined}
               icon={statusIcon(instance.status)}
               accessories={[
-                { text: timeAgo(instance.updated_at) },
+                { icon: terminalIcon(instance.terminal), tooltip: terminalLabel(instance.terminal) },
+                { text: timeAgo(instance.last_prompt_at ?? instance.updated_at) },
               ]}
               detail={
                 <List.Item.Detail
@@ -95,6 +112,11 @@ export default function Command() {
                       <List.Item.Detail.Metadata.Label
                         title="Model"
                         text={instance.model ?? "unknown"}
+                      />
+                      <List.Item.Detail.Metadata.Label
+                        title="Terminal"
+                        text={terminalLabel(instance.terminal)}
+                        icon={terminalIcon(instance.terminal)}
                       />
                       <List.Item.Detail.Metadata.Label
                         title="Mode"
@@ -157,7 +179,7 @@ export default function Command() {
                     onAction={() => {
                       closeMainWindow();
                       if (instance.cwd) {
-                        focusGhosttyTerminal(instance.cwd);
+                        focusGhosttyTerminal(instance.cwd, instance.ghostty_terminal_id);
                       }
                     }}
                   />
