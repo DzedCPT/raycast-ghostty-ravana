@@ -28,7 +28,8 @@
   ],
   "dependencies": {
     "@raycast/api": "^1.93.2",
-    "@raycast/utils": "^1.19.1"
+    "@raycast/utils": "^1.19.1",
+    "@rolldown/binding-darwin-arm64": "^1.0.0-rc.15"
   },
   "devDependencies": {
     "@raycast/eslint-config": "^1.0.11",
