@@ -1,7 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import * as fs from "fs";
 import * as os from "os";
+import * as child_process from "child_process";
 import {
+  focusGhosttyTerminal,
   isProcessAlive,
   jsonlPath,
   loadInstances,
@@ -14,6 +16,7 @@ import {
 
 vi.mock("fs");
 vi.mock("os");
+vi.mock("child_process");
 
 describe("projectName", () => {
   it("returns 'unknown' for undefined", () => {
@@ -303,6 +306,41 @@ describe("loadRecentActivity", () => {
       JSON.stringify({ message: { role: "assistant", content: [] } }),
     );
     expect(loadRecentActivity("/foo", "session1")).toEqual({ recentTools: [], lastResponse: "" });
+  });
+});
+
+describe("focusGhosttyTerminal", () => {
+  beforeEach(() => {
+    vi.mocked(child_process.execSync).mockReset().mockReturnValue(Buffer.from(""));
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("focuses by terminal ID when ghosttyTerminalId is provided", () => {
+    focusGhosttyTerminal("/some/project", "ABCD-1234");
+    const script = vi.mocked(child_process.execSync).mock.calls[0][0] as string;
+    expect(script).toContain('id is "ABCD-1234"');
+  });
+
+  it("includes cwd fallback when ghosttyTerminalId is provided", () => {
+    focusGhosttyTerminal("/some/project", "ABCD-1234");
+    const script = vi.mocked(child_process.execSync).mock.calls[0][0] as string;
+    expect(script).toContain('working directory contains "/some/project"');
+  });
+
+  it("uses cwd contains match when no ghosttyTerminalId is provided", () => {
+    focusGhosttyTerminal("/some/project");
+    const script = vi.mocked(child_process.execSync).mock.calls[0][0] as string;
+    expect(script).toContain('working directory contains "/some/project"');
+    expect(script).not.toContain("id is");
+  });
+
+  it("does not use id-based match when no ghosttyTerminalId is provided", () => {
+    focusGhosttyTerminal("/some/project", undefined);
+    const script = vi.mocked(child_process.execSync).mock.calls[0][0] as string;
+    expect(script).not.toContain("id is");
   });
 });
 
