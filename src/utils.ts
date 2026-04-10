@@ -19,6 +19,8 @@ export interface ClaudeInstance {
   custom_name?: string;
   terminal?: string;
   updated_at?: string;
+  last_prompt_at?: string;
+  ghostty_terminal_id?: string;
 }
 
 export interface RecentActivity {
