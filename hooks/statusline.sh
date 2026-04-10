@@ -67,8 +67,14 @@ if [ -n "$SESSION_ID" ]; then
     mkdir -p "$STATE_DIR"
     METRICS_FILE="${STATE_DIR}/${SESSION_ID}.metrics.json"
 
-    # Detect terminal env vars
-    TERM_VAL="${TERM_PROGRAM:-}"
+    # Detect terminal from env vars
+    if [[ -n "${GHOSTTY_BIN_DIR:-}" || -n "${GHOSTTY_RESOURCES_DIR:-}" ]]; then
+        TERM_VAL="ghostty"
+    elif [[ "${ZED_TERM:-}" == "true" || -n "${ZED_ENVIRONMENT:-}" ]]; then
+        TERM_VAL="zed"
+    else
+        TERM_VAL="${TERM_PROGRAM:-unknown}"
+    fi
     WEZTERM_VAL="${WEZTERM_PANE:-}"
 
     JQ_ARGS=(
@@ -80,13 +86,10 @@ if [ -n "$SESSION_ID" ]; then
         --argjson context_percent "$PERCENT_USED"
         --argjson pid "$PPID"
         --arg updated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+        --arg terminal "$TERM_VAL"
     )
-    JQ_EXPR='{session_id: $session_id, cwd: $cwd, model: $model, lines_added: $lines_added, lines_removed: $lines_removed, context_percent: $context_percent, pid: $pid, updated_at: $updated_at}'
+    JQ_EXPR='{session_id: $session_id, cwd: $cwd, model: $model, lines_added: $lines_added, lines_removed: $lines_removed, context_percent: $context_percent, pid: $pid, updated_at: $updated_at, terminal: $terminal}'
 
-    if [[ -n "$TERM_VAL" ]]; then
-        JQ_ARGS+=(--arg terminal "$TERM_VAL")
-        JQ_EXPR="${JQ_EXPR%\}}, terminal: \$terminal}"
-    fi
     if [[ -n "$WEZTERM_VAL" ]]; then
         JQ_ARGS+=(--argjson wezterm_pane "$WEZTERM_VAL")
         JQ_EXPR="${JQ_EXPR%\}}, wezterm_pane: \$wezterm_pane}"
