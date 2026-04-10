@@ -15,6 +15,8 @@ declare type Preferences = ExtensionPreferences
 declare namespace Preferences {
   /** Preferences accessible in the `switch-agent` command */
   export type SwitchAgent = ExtensionPreferences & {}
+  /** Preferences accessible in the `worktree-status` command */
+  export type WorktreeStatus = ExtensionPreferences & {}
   /** Preferences accessible in the `index` command */
   export type Index = ExtensionPreferences & {}
 }
@@ -22,6 +24,8 @@ declare namespace Preferences {
 declare namespace Arguments {
   /** Arguments passed to the `switch-agent` command */
   export type SwitchAgent = {}
+  /** Arguments passed to the `worktree-status` command */
+  export type WorktreeStatus = {}
   /** Arguments passed to the `index` command */
   export type Index = {}
 }
