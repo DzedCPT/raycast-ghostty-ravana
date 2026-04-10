@@ -69,6 +69,14 @@ update_status() {
 case "$HOOK_EVENT" in
     "SessionStart")
         update_status "stopped"
+        # Capture the Ghostty terminal UUID for the pane we're running in.
+        # We match by exact cwd at session start, before Claude navigates anywhere.
+        if command -v osascript &> /dev/null; then
+            GHOSTTY_ID=$(osascript -e "tell application \"Ghostty\" to get id of (first terminal whose working directory is \"$PWD\")" 2>/dev/null || true)
+            if [[ -n "$GHOSTTY_ID" && -f "$STATE_FILE" && -s "$STATE_FILE" ]]; then
+                jq --arg gid "$GHOSTTY_ID" '.ghostty_terminal_id = $gid' "$STATE_FILE" > "${STATE_FILE}.tmp" 2>/dev/null && mv "${STATE_FILE}.tmp" "$STATE_FILE" || rm -f "${STATE_FILE}.tmp"
+            fi
+        fi
         ;;
     "UserPromptSubmit")
         USER_PROMPT=$(echo "$INPUT" | jq -r '.prompt // empty')
@@ -87,7 +95,8 @@ case "$HOOK_EVENT" in
         AUTO_NAME=$(echo "$USER_PROMPT" | cut -c1-140)
         update_status "working"
         if [[ -n "$AUTO_NAME" && -f "$STATE_FILE" && -s "$STATE_FILE" ]]; then
-            jq --arg name "$AUTO_NAME" '.prompt = $name' "$STATE_FILE" > "${STATE_FILE}.tmp" 2>/dev/null && mv "${STATE_FILE}.tmp" "$STATE_FILE" || rm -f "${STATE_FILE}.tmp"
+            NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            jq --arg name "$AUTO_NAME" --arg ts "$NOW" '.prompt = $name | .last_prompt_at = $ts' "$STATE_FILE" > "${STATE_FILE}.tmp" 2>/dev/null && mv "${STATE_FILE}.tmp" "$STATE_FILE" || rm -f "${STATE_FILE}.tmp"
         fi
         ;;
     "PreToolUse")
