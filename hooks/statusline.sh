@@ -24,7 +24,10 @@ if [[ "$MODEL_DISPLAY" == arn:* ]]; then
         "ogexi6d27led") MODEL_DISPLAY="sonnet-4.0" ;;
         "ipjns1qlcy7k") MODEL_DISPLAY="haiku" ;;
         "9c9vc330rdvj") MODEL_DISPLAY="opus-4.5" ;;
-        *) MODEL_DISPLAY="unknown" ;;
+        "gdsg22td462g") MODEL_DISPLAY="opus-4.6" ;;
+        "5zsfjpvh8qwx") MODEL_DISPLAY="haiku-4.5" ;;
+        "6y61sjrpojee") MODEL_DISPLAY="opus-4.6" ;;
+        *) MODEL_DISPLAY="$ARN_SUFFIX" ;;
     esac
 fi
 
