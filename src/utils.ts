@@ -126,10 +126,23 @@ export function loadRecentActivity(cwd?: string, sessionId?: string): RecentActi
   }
 }
 
-export function focusGhosttyTerminal(cwd: string) {
-  const script = `
+export function focusGhosttyTerminal(cwd: string, ghosttyTerminalId?: string) {
+  const script = ghosttyTerminalId
+    ? `
 tell application "Ghostty"
-  set matches to every terminal whose working directory is "${cwd}"
+  set matches to every terminal whose id is "${ghosttyTerminalId}"
+  if (count of matches) > 0 then
+    focus (item 1 of matches)
+  else
+    set matches to every terminal whose working directory contains "${cwd}"
+    if (count of matches) > 0 then
+      focus (item 1 of matches)
+    end if
+  end if
+end tell`
+    : `
+tell application "Ghostty"
+  set matches to every terminal whose working directory contains "${cwd}"
   if (count of matches) > 0 then
     focus (item 1 of matches)
   end if
