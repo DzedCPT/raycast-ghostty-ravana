@@ -109,19 +109,43 @@ process_worktree() {
     fi
   fi
 
+  # --- CI checks (only when a PR exists) ---
+  local ci_checks="null"
+  local ci_summary="none"
+
+  if [[ "$pr_number" != "null" ]]; then
+    local ci_raw
+    ci_raw=$(gh pr checks "$pr_number" \
+      --repo "$repo" \
+      --json name,state,bucket,link,workflow \
+      2>/dev/null || echo "null")
+
+    if [[ "$ci_raw" != "null" && "$ci_raw" != "[]" ]]; then
+      ci_checks="$ci_raw"
+      ci_summary=$(echo "$ci_raw" | jq -r '
+        if any(.[]; .bucket == "fail" or .bucket == "cancel") then "fail"
+        elif any(.[]; .bucket == "pending") then "pending"
+        else "pass"
+        end
+      ')
+    fi
+  fi
+
   local filename="${root_name}__${wt_name}.json"
   # PID suffix ensures unique temp files when concurrent runs target the same worktree
   local tmpfile="$WORKTREES_DIR/.${filename}.tmp.$$"
 
   jq -n \
-    --arg  ts        "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-    --arg  root      "$root_name" \
-    --arg  worktree  "$wt_name" \
-    --arg  path      "$wt_dir" \
-    --arg  branch    "$branch" \
-    --arg  repo      "$repo" \
-    --arg  status    "$status" \
-    --argjson pr_number "$pr_number" \
+    --arg  ts         "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    --arg  root       "$root_name" \
+    --arg  worktree   "$wt_name" \
+    --arg  path       "$wt_dir" \
+    --arg  branch     "$branch" \
+    --arg  repo       "$repo" \
+    --arg  status     "$status" \
+    --argjson pr_number  "$pr_number" \
+    --arg  ci_summary "$ci_summary" \
+    --argjson ci_checks  "$ci_checks" \
     '{
       updated_at: $ts,
       root:       $root,
@@ -130,7 +154,9 @@ process_worktree() {
       branch:     $branch,
       repo:       $repo,
       status:     $status,
-      pr_number:  $pr_number
+      pr_number:  $pr_number,
+      ci_summary: $ci_summary,
+      ci_checks:  $ci_checks
     }' > "$tmpfile"
 
   mv "$tmpfile" "$WORKTREES_DIR/$filename"
