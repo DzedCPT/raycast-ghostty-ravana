@@ -69,4 +69,49 @@ JQ_EXPR="$JQ_EXPR"'
 
 jq "$JQ_EXPR" "$SETTINGS" > "${SETTINGS}.tmp" && mv "${SETTINGS}.tmp" "$SETTINGS"
 
+echo "Setting up launchd jobs..."
+LAUNCH_AGENTS_DIR="$HOME/Library/LaunchAgents"
+WORKTREE_SCRIPT="$SCRIPT_DIR/scripts/gh-worktree-status.sh"
+chmod +x "$WORKTREE_SCRIPT"
+
+mkdir -p "$LAUNCH_AGENTS_DIR"
+mkdir -p /tmp/gh-worktree-status/worktrees
+
+# Symlink the script to a well-known path so the Raycast extension can find it
+# regardless of where the repo is checked out
+ln -sf "$WORKTREE_SCRIPT" /tmp/gh-worktree-status/script.sh
+
+# Migrate: remove the old monolithic status file if it exists
+rm -f /tmp/gh-worktree-status/status.json
+
+LABEL="com.jboyle.worktree-status"
+PLIST="$LAUNCH_AGENTS_DIR/$LABEL.plist"
+
+cat > "$PLIST" << EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>$LABEL</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>$WORKTREE_SCRIPT</string>
+    </array>
+    <key>StartInterval</key>
+    <integer>600</integer>
+    <key>RunAtLoad</key>
+    <true/>
+</dict>
+</plist>
+EOF
+
+# Reload if already running, otherwise just load
+if launchctl list | grep -q "$LABEL"; then
+    launchctl unload "$PLIST"
+fi
+launchctl load "$PLIST"
+echo "  ✓ Loaded $LABEL"
+
 echo "Done! Restart Claude Code sessions for changes to take effect."
