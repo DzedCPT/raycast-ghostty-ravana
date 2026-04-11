@@ -26,23 +26,35 @@ function statusIcon(status?: string): { source: Icon; tintColor: Color } {
     case "stopped":
       return { source: Icon.CircleFilled, tintColor: Color.SecondaryText };
     default:
-      return { source: Icon.QuestionMarkCircle, tintColor: Color.SecondaryText };
+      return {
+        source: Icon.QuestionMarkCircle,
+        tintColor: Color.SecondaryText,
+      };
   }
 }
 
 function terminalLabel(terminal?: string): string {
   switch (terminal) {
-    case "ghostty": return "Ghostty";
-    case "zed": return "Zed";
-    default: return terminal ?? "Unknown";
+    case "ghostty":
+      return "Ghostty";
+    case "zed":
+      return "Zed";
+    default:
+      return terminal ?? "Unknown";
   }
 }
 
 function terminalIcon(terminal?: string): { source: Icon; tintColor: Color } {
   switch (terminal) {
-    case "ghostty": return { source: Icon.Terminal, tintColor: Color.Purple };
-    case "zed": return { source: Icon.Code, tintColor: Color.Blue };
-    default: return { source: Icon.QuestionMarkCircle, tintColor: Color.SecondaryText };
+    case "ghostty":
+      return { source: Icon.Terminal, tintColor: Color.Purple };
+    case "zed":
+      return { source: Icon.Code, tintColor: Color.Blue };
+    default:
+      return {
+        source: Icon.QuestionMarkCircle,
+        tintColor: Color.SecondaryText,
+      };
   }
 }
 
@@ -51,7 +63,10 @@ function modeIcon(mode?: string): { source: Icon; tintColor: Color } {
     case "acceptEdits":
       return { source: Icon.CircleFilled, tintColor: Color.Purple };
     case "plan":
-      return { source: Icon.CircleFilled, tintColor: { light: "#0d9488", dark: "#2dd4bf" } };
+      return {
+        source: Icon.CircleFilled,
+        tintColor: { light: "#0d9488", dark: "#2dd4bf" },
+      };
     case "dontAsk":
     case "bypassPermissions":
       return { source: Icon.CircleFilled, tintColor: Color.Red };
@@ -59,7 +74,6 @@ function modeIcon(mode?: string): { source: Icon; tintColor: Color } {
       return { source: Icon.CircleFilled, tintColor: Color.SecondaryText };
   }
 }
-
 
 export default function Command() {
   const instances = loadInstances();
@@ -76,17 +90,27 @@ export default function Command() {
           const added = instance.lines_added ?? 0;
           const removed = instance.lines_removed ?? 0;
           const contextPct = instance.context_percent ?? 0;
-          const activity = loadRecentActivity(instance.cwd, instance.session_id);
+          const activity = loadRecentActivity(
+            instance.cwd,
+            instance.session_id,
+          );
 
           return (
             <List.Item
               key={instance.session_id}
               title={instance.custom_name || projectName(instance.cwd)}
-              subtitle={instance.custom_name ? projectName(instance.cwd) : undefined}
+              subtitle={
+                instance.custom_name ? projectName(instance.cwd) : undefined
+              }
               icon={statusIcon(instance.status)}
               accessories={[
-                { icon: terminalIcon(instance.terminal), tooltip: terminalLabel(instance.terminal) },
-                { text: timeAgo(instance.last_prompt_at ?? instance.updated_at) },
+                {
+                  icon: terminalIcon(instance.terminal),
+                  tooltip: terminalLabel(instance.terminal),
+                },
+                {
+                  text: timeAgo(instance.last_prompt_at ?? instance.updated_at),
+                },
               ]}
               detail={
                 <List.Item.Detail
@@ -106,7 +130,12 @@ export default function Command() {
                       )}
                       <List.Item.Detail.Metadata.Label
                         title="Status"
-                        text={instance.status ? instance.status.charAt(0).toUpperCase() + instance.status.slice(1) : "Unknown"}
+                        text={
+                          instance.status
+                            ? instance.status.charAt(0).toUpperCase() +
+                              instance.status.slice(1)
+                            : "Unknown"
+                        }
                         icon={statusIcon(instance.status)}
                       />
                       <List.Item.Detail.Metadata.Label
@@ -125,13 +154,25 @@ export default function Command() {
                       />
                       <List.Item.Detail.Metadata.Separator />
                       <List.Item.Detail.Metadata.TagList title="Edits">
-                        <List.Item.Detail.Metadata.TagList.Item text={`+${added}`} color={Color.Green} />
-                        <List.Item.Detail.Metadata.TagList.Item text={`-${removed}`} color={Color.Red} />
+                        <List.Item.Detail.Metadata.TagList.Item
+                          text={`+${added}`}
+                          color={Color.Green}
+                        />
+                        <List.Item.Detail.Metadata.TagList.Item
+                          text={`-${removed}`}
+                          color={Color.Red}
+                        />
                       </List.Item.Detail.Metadata.TagList>
                       <List.Item.Detail.Metadata.TagList title="Context">
                         <List.Item.Detail.Metadata.TagList.Item
                           text={`${contextPct}%`}
-                          color={contextPct >= 80 ? Color.Red : contextPct >= 60 ? Color.Orange : Color.SecondaryText}
+                          color={
+                            contextPct >= 80
+                              ? Color.Red
+                              : contextPct >= 60
+                                ? Color.Orange
+                                : Color.SecondaryText
+                          }
                         />
                       </List.Item.Detail.Metadata.TagList>
                       {activity?.lastResponse && (
@@ -161,7 +202,11 @@ export default function Command() {
                       />
                       <List.Item.Detail.Metadata.Label
                         title="Last Active"
-                        text={instance.updated_at ? new Date(instance.updated_at).toLocaleString() : "unknown"}
+                        text={
+                          instance.updated_at
+                            ? new Date(instance.updated_at).toLocaleString()
+                            : "unknown"
+                        }
                       />
                       <List.Item.Detail.Metadata.Label
                         title="Session"
@@ -179,7 +224,10 @@ export default function Command() {
                     onAction={() => {
                       closeMainWindow();
                       if (instance.cwd) {
-                        focusGhosttyTerminal(instance.cwd, instance.ghostty_terminal_id);
+                        focusGhosttyTerminal(
+                          instance.cwd,
+                          instance.ghostty_terminal_id,
+                        );
                       }
                     }}
                   />
@@ -191,8 +239,14 @@ export default function Command() {
                       execSync(`zed -r "${instance.cwd}"`);
                     }}
                   />
-                  <Action.CopyToClipboard title="Copy Working Directory" content={instance.cwd ?? ""} />
-                  <Action.CopyToClipboard title="Copy Session ID" content={instance.session_id} />
+                  <Action.CopyToClipboard
+                    title="Copy Working Directory"
+                    content={instance.cwd ?? ""}
+                  />
+                  <Action.CopyToClipboard
+                    title="Copy Session ID"
+                    content={instance.session_id}
+                  />
                 </ActionPanel>
               }
             />

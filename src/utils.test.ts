@@ -171,7 +171,9 @@ describe("loadRecentActivity", () => {
         },
       }),
     );
-    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual(["Grep"]);
+    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual([
+      "Grep",
+    ]);
   });
 
   it("formats Edit tool with just the filename", () => {
@@ -181,12 +183,18 @@ describe("loadRecentActivity", () => {
         message: {
           role: "assistant",
           content: [
-            { type: "tool_use", name: "Edit", input: { file_path: "/path/to/foo.ts" } },
+            {
+              type: "tool_use",
+              name: "Edit",
+              input: { file_path: "/path/to/foo.ts" },
+            },
           ],
         },
       }),
     );
-    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual(["Edit: foo.ts"]);
+    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual([
+      "Edit: foo.ts",
+    ]);
   });
 
   it("formats Read tool with just the filename", () => {
@@ -196,12 +204,18 @@ describe("loadRecentActivity", () => {
         message: {
           role: "assistant",
           content: [
-            { type: "tool_use", name: "Read", input: { file_path: "/src/index.ts" } },
+            {
+              type: "tool_use",
+              name: "Read",
+              input: { file_path: "/src/index.ts" },
+            },
           ],
         },
       }),
     );
-    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual(["Read: index.ts"]);
+    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual([
+      "Read: index.ts",
+    ]);
   });
 
   it("formats Write tool with just the filename", () => {
@@ -211,12 +225,18 @@ describe("loadRecentActivity", () => {
         message: {
           role: "assistant",
           content: [
-            { type: "tool_use", name: "Write", input: { file_path: "/out/result.json" } },
+            {
+              type: "tool_use",
+              name: "Write",
+              input: { file_path: "/out/result.json" },
+            },
           ],
         },
       }),
     );
-    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual(["Write: result.json"]);
+    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual([
+      "Write: result.json",
+    ]);
   });
 
   it("formats Bash tool with command truncated to 40 chars", () => {
@@ -226,7 +246,9 @@ describe("loadRecentActivity", () => {
       JSON.stringify({
         message: {
           role: "assistant",
-          content: [{ type: "tool_use", name: "Bash", input: { command: cmd } }],
+          content: [
+            { type: "tool_use", name: "Bash", input: { command: cmd } },
+          ],
         },
       }),
     );
@@ -239,12 +261,19 @@ describe("loadRecentActivity", () => {
     vi.mocked(fs.existsSync).mockReturnValue(true);
     const lines = ["A", "B", "C", "D", "E", "F", "G"].map((name) =>
       JSON.stringify({
-        message: { role: "assistant", content: [{ type: "tool_use", name, input: {} }] },
+        message: {
+          role: "assistant",
+          content: [{ type: "tool_use", name, input: {} }],
+        },
       }),
     );
     vi.mocked(fs.readFileSync).mockReturnValue(lines.join("\n"));
     expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual([
-      "C", "D", "E", "F", "G",
+      "C",
+      "D",
+      "E",
+      "F",
+      "G",
     ]);
   });
 
@@ -258,7 +287,9 @@ describe("loadRecentActivity", () => {
         },
       }),
     );
-    expect(loadRecentActivity("/foo", "session1")?.lastResponse).toBe("Hello world");
+    expect(loadRecentActivity("/foo", "session1")?.lastResponse).toBe(
+      "Hello world",
+    );
   });
 
   it("truncates lastResponse to 200 chars", () => {
@@ -271,7 +302,9 @@ describe("loadRecentActivity", () => {
         },
       }),
     );
-    expect(loadRecentActivity("/foo", "session1")?.lastResponse).toHaveLength(200);
+    expect(loadRecentActivity("/foo", "session1")?.lastResponse).toHaveLength(
+      200,
+    );
   });
 
   it("skips malformed JSONL lines without throwing", () => {
@@ -280,11 +313,16 @@ describe("loadRecentActivity", () => {
       [
         "not valid json {{",
         JSON.stringify({
-          message: { role: "assistant", content: [{ type: "tool_use", name: "Grep", input: {} }] },
+          message: {
+            role: "assistant",
+            content: [{ type: "tool_use", name: "Grep", input: {} }],
+          },
         }),
       ].join("\n"),
     );
-    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual(["Grep"]);
+    expect(loadRecentActivity("/foo", "session1")?.recentTools).toEqual([
+      "Grep",
+    ]);
   });
 
   it("ignores non-assistant messages", () => {
@@ -305,13 +343,18 @@ describe("loadRecentActivity", () => {
     vi.mocked(fs.readFileSync).mockReturnValue(
       JSON.stringify({ message: { role: "assistant", content: [] } }),
     );
-    expect(loadRecentActivity("/foo", "session1")).toEqual({ recentTools: [], lastResponse: "" });
+    expect(loadRecentActivity("/foo", "session1")).toEqual({
+      recentTools: [],
+      lastResponse: "",
+    });
   });
 });
 
 describe("focusGhosttyTerminal", () => {
   beforeEach(() => {
-    vi.mocked(child_process.execSync).mockReset().mockReturnValue(Buffer.from(""));
+    vi.mocked(child_process.execSync)
+      .mockReset()
+      .mockReturnValue(Buffer.from(""));
   });
 
   afterEach(() => {
@@ -366,10 +409,16 @@ describe("loadInstances", () => {
   });
 
   it("loads a basic instance", () => {
-    vi.mocked(fs.readdirSync).mockReturnValue(["abc.json"] as unknown as fs.Dirent[]);
+    vi.mocked(fs.readdirSync).mockReturnValue([
+      "abc.json",
+    ] as unknown as fs.Dirent[]);
     vi.mocked(fs.readFileSync).mockImplementation((path) => {
       if (String(path).endsWith("abc.json")) {
-        return JSON.stringify({ session_id: "abc", status: "working", pid: 123 });
+        return JSON.stringify({
+          session_id: "abc",
+          status: "working",
+          pid: 123,
+        });
       }
       throw new Error("ENOENT");
     });
@@ -393,13 +442,17 @@ describe("loadInstances", () => {
   });
 
   it("skips empty files", () => {
-    vi.mocked(fs.readdirSync).mockReturnValue(["empty.json"] as unknown as fs.Dirent[]);
+    vi.mocked(fs.readdirSync).mockReturnValue([
+      "empty.json",
+    ] as unknown as fs.Dirent[]);
     vi.mocked(fs.readFileSync).mockReturnValue("   ");
     expect(loadInstances()).toHaveLength(0);
   });
 
   it("merges metrics data with hook data, hook fields winning", () => {
-    vi.mocked(fs.readdirSync).mockReturnValue(["abc.json"] as unknown as fs.Dirent[]);
+    vi.mocked(fs.readdirSync).mockReturnValue([
+      "abc.json",
+    ] as unknown as fs.Dirent[]);
     vi.mocked(fs.readFileSync).mockImplementation((path) => {
       const p = String(path);
       if (p.endsWith("abc.json")) {
@@ -423,11 +476,11 @@ describe("loadInstances", () => {
       throw new Error("ENOENT");
     });
     const [inst] = loadInstances();
-    expect(inst.status).toBe("working");          // hook wins
-    expect(inst.permission_mode).toBe("plan");    // hook wins
-    expect(inst.model).toBe("claude-opus");       // metrics wins (not a hook-owned field)
-    expect(inst.context_percent).toBe(45);        // from metrics
-    expect(inst.lines_added).toBe(10);            // from metrics
+    expect(inst.status).toBe("working"); // hook wins
+    expect(inst.permission_mode).toBe("plan"); // hook wins
+    expect(inst.model).toBe("claude-opus"); // metrics wins (not a hook-owned field)
+    expect(inst.context_percent).toBe(45); // from metrics
+    expect(inst.lines_added).toBe(10); // from metrics
   });
 
   it("filters out dead processes and attempts to delete their files", () => {
@@ -435,7 +488,9 @@ describe("loadInstances", () => {
       if (pid === 999) throw new Error("ESRCH");
       return true;
     });
-    vi.mocked(fs.readdirSync).mockReturnValue(["dead.json"] as unknown as fs.Dirent[]);
+    vi.mocked(fs.readdirSync).mockReturnValue([
+      "dead.json",
+    ] as unknown as fs.Dirent[]);
     vi.mocked(fs.readFileSync).mockReturnValue(
       JSON.stringify({ session_id: "dead", pid: 999 }),
     );
@@ -453,10 +508,18 @@ describe("loadInstances", () => {
     vi.mocked(fs.readFileSync).mockImplementation((path) => {
       const p = String(path);
       if (p.endsWith("a.json")) {
-        return JSON.stringify({ session_id: "a", pid: 123, updated_at: "2024-01-01T12:00:00Z" });
+        return JSON.stringify({
+          session_id: "a",
+          pid: 123,
+          updated_at: "2024-01-01T12:00:00Z",
+        });
       }
       if (p.endsWith("b.json")) {
-        return JSON.stringify({ session_id: "b", pid: 123, updated_at: "2024-01-01T11:00:00Z" });
+        return JSON.stringify({
+          session_id: "b",
+          pid: 123,
+          updated_at: "2024-01-01T11:00:00Z",
+        });
       }
       throw new Error("ENOENT");
     });
@@ -473,10 +536,18 @@ describe("loadInstances", () => {
     vi.mocked(fs.readFileSync).mockImplementation((path) => {
       const p = String(path);
       if (p.endsWith("old.json")) {
-        return JSON.stringify({ session_id: "old", pid: 1, updated_at: "2024-01-01T10:00:00Z" });
+        return JSON.stringify({
+          session_id: "old",
+          pid: 1,
+          updated_at: "2024-01-01T10:00:00Z",
+        });
       }
       if (p.endsWith("new.json")) {
-        return JSON.stringify({ session_id: "new", pid: 2, updated_at: "2024-01-01T12:00:00Z" });
+        return JSON.stringify({
+          session_id: "new",
+          pid: 2,
+          updated_at: "2024-01-01T12:00:00Z",
+        });
       }
       throw new Error("ENOENT");
     });

@@ -71,11 +71,20 @@ export function modeLabel(mode?: string): string {
 export function jsonlPath(cwd?: string, sessionId?: string): string | null {
   if (!cwd || !sessionId) return null;
   const projectDir = cwd.replace(/\//g, "-");
-  const path = join(homedir(), ".claude", "projects", projectDir, `${sessionId}.jsonl`);
+  const path = join(
+    homedir(),
+    ".claude",
+    "projects",
+    projectDir,
+    `${sessionId}.jsonl`,
+  );
   return existsSync(path) ? path : null;
 }
 
-export function loadRecentActivity(cwd?: string, sessionId?: string): RecentActivity | null {
+export function loadRecentActivity(
+  cwd?: string,
+  sessionId?: string,
+): RecentActivity | null {
   const path = jsonlPath(cwd, sessionId);
   if (!path) return null;
 
@@ -164,9 +173,14 @@ export function loadInstances(): ClaudeInstance[] {
 
           const metricsFile = file.replace(".json", ".metrics.json");
           try {
-            const metricsContent = readFileSync(join(STATE_DIR, metricsFile), "utf-8");
+            const metricsContent = readFileSync(
+              join(STATE_DIR, metricsFile),
+              "utf-8",
+            );
             if (metricsContent.trim()) {
-              const metrics = JSON.parse(metricsContent) as Partial<ClaudeInstance>;
+              const metrics = JSON.parse(
+                metricsContent,
+              ) as Partial<ClaudeInstance>;
               // Hook-owned fields win
               const merged = { ...hook, ...metrics };
               merged.status = hook.status;

@@ -9,10 +9,15 @@ tell application "Ghostty"
   set activePane to focused terminal of activeTab
   get working directory of activePane
 end tell`;
-    const cwd = execSync(`osascript -e '${script}'`, { encoding: "utf-8" }).trim();
+    const cwd = execSync(`osascript -e '${script}'`, {
+      encoding: "utf-8",
+    }).trim();
 
     if (!cwd) {
-      await showToast({ style: Toast.Style.Failure, title: "Could not get working directory from Ghostty" });
+      await showToast({
+        style: Toast.Style.Failure,
+        title: "Could not get working directory from Ghostty",
+      });
       return;
     }
 
