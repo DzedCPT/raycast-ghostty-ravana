@@ -19,10 +19,10 @@ import {
   SCRIPT_LINK,
   loadStatus,
   refreshWorktree,
-  removeWorktree,
+  deleteStatusFile,
+  removeWorktreesDetached,
   statusLabel,
   statusOrder,
-  ciSummaryLabel,
   failingChecks,
 } from "./worktree-utils";
 
@@ -43,16 +43,16 @@ function statusColor(status: string): Color {
   }
 }
 
-function ciSummaryColor(ci?: string): Color {
+function ciSummaryIcon(ci?: string): { source: Icon; tintColor: Color } {
   switch (ci) {
     case "pass":
-      return Color.Green;
+      return { source: Icon.CircleFilled, tintColor: Color.Green };
     case "fail":
-      return Color.Red;
+      return { source: Icon.CircleFilled, tintColor: Color.Red };
     case "pending":
-      return Color.Orange;
+      return { source: Icon.CircleEllipsis, tintColor: Color.Orange };
     default:
-      return Color.SecondaryText;
+      return { source: Icon.Circle, tintColor: Color.SecondaryText };
   }
 }
 
@@ -140,26 +140,13 @@ export default function Command() {
       primaryAction: { title: "Remove", style: Alert.ActionStyle.Destructive },
     });
     if (!confirmed) return;
-    try {
-      removeWorktree(wt);
-      setSelectedPaths((prev) => {
-        const next = new Set(prev);
-        next.delete(wt.path);
-        return next;
-      });
-      reloadData();
-      await showToast({
-        style: Toast.Style.Success,
-        title: "Worktree removed",
-        message: wt.branch || wt.worktree,
-      });
-    } catch (e) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Cleanup failed",
-        message: e instanceof Error ? e.message : String(e),
-      });
-    }
+    // Delete the status JSON synchronously before closing so the entry is gone
+    // immediately on the next open, rather than waiting for the background process.
+    deleteStatusFile(wt);
+    closeMainWindow();
+    // The actual git worktree removal runs in a detached background process so it
+    // continues even after Raycast closes.
+    removeWorktreesDetached([wt]);
   }
 
   async function cleanupSelected() {
@@ -173,32 +160,13 @@ export default function Command() {
       },
     });
     if (!confirmed) return;
-    const failed: string[] = [];
-    for (const wt of targets) {
-      try {
-        removeWorktree(wt);
-        setSelectedPaths((prev) => {
-          const next = new Set(prev);
-          next.delete(wt.path);
-          return next;
-        });
-      } catch {
-        failed.push(wt.branch || wt.worktree);
-      }
-    }
-    reloadData();
-    if (failed.length > 0) {
-      await showToast({
-        style: Toast.Style.Failure,
-        title: "Some removals failed",
-        message: failed.join(", "),
-      });
-    } else {
-      await showToast({
-        style: Toast.Style.Success,
-        title: `Removed ${targets.length} worktree${targets.length === 1 ? "" : "s"}`,
-      });
-    }
+    // Delete all status JSONs synchronously before closing so entries disappear
+    // immediately on the next open, rather than waiting for the background process.
+    targets.forEach(deleteStatusFile);
+    closeMainWindow();
+    // The actual git worktree removals run in a detached background process so they
+    // continue even after Raycast closes.
+    removeWorktreesDetached(targets);
   }
 
   return (
@@ -224,8 +192,9 @@ export default function Command() {
                     },
                   ]
                 : []),
+              { date: new Date(wt.updated_at), tooltip: "Last checked" },
               {
-                tag: {
+                text: {
                   value: statusLabel(wt.status),
                   color: statusColor(wt.status),
                 },
@@ -233,18 +202,16 @@ export default function Command() {
               ...(wt.ci_summary && wt.ci_summary !== "none"
                 ? [
                     {
-                      tag: {
-                        value: ciSummaryLabel(wt.ci_summary),
-                        color: ciSummaryColor(wt.ci_summary),
-                      },
+                      icon: ciSummaryIcon(wt.ci_summary),
                       tooltip:
                         wt.ci_summary === "fail"
-                          ? `${failingChecks(wt).length} check(s) failing`
-                          : undefined,
+                          ? `CI: ${failingChecks(wt).length} check(s) failing`
+                          : wt.ci_summary === "pending"
+                            ? "CI: pending"
+                            : "CI: passing",
                     },
                   ]
                 : []),
-              { date: new Date(wt.updated_at), tooltip: "Last checked" },
             ]}
             actions={
               <ActionPanel>
