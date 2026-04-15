@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, readdirSync, unlinkSync } from "fs";
 import { join } from "path";
-import { execSync } from "child_process";
+import { execSync, spawn } from "child_process";
 
 export interface CICheck {
   name: string;
@@ -147,9 +147,21 @@ export function getMainWorktreePath(worktreePath: string): string {
     .trim();
 }
 
+export function deleteStatusFile(wt: Worktree): void {
+  const statusFile = join(WORKTREES_DIR, statusFileName(wt));
+  if (existsSync(statusFile)) {
+    unlinkSync(statusFile);
+  }
+}
+
 export function removeWorktree(wt: Worktree): void {
   const mainPath = getMainWorktreePath(wt.path);
-  execSync(`git -C "${mainPath}" worktree remove --force "${wt.path}"`);
+  // `git worktree remove <path>` matches by git's internally registered path, which can
+  // differ from the actual directory name if the worktree was added with a typo or later
+  // renamed. It silently exits 0 without deleting anything in that case. Using rm -rf on
+  // the real path and then `git worktree prune` is more reliable.
+  execSync(`rm -rf "${wt.path}"`);
+  execSync(`git -C "${mainPath}" worktree prune`);
   if (wt.branch) {
     execSync(`git -C "${mainPath}" branch -D "${wt.branch}"`);
   }
@@ -157,4 +169,32 @@ export function removeWorktree(wt: Worktree): void {
   if (existsSync(statusFile)) {
     unlinkSync(statusFile);
   }
+}
+
+export function removeWorktreesDetached(worktrees: Worktree[]): void {
+  const mainPaths = new Set<string>();
+  const perWorktree = worktrees.map((wt) => {
+    const mainPath = getMainWorktreePath(wt.path);
+    mainPaths.add(mainPath);
+    const statusFile = join(WORKTREES_DIR, statusFileName(wt));
+    // See removeWorktree for why we use rm -rf + prune instead of `git worktree remove`.
+    const cmds = [`rm -rf "${wt.path}"`];
+    if (wt.branch) {
+      cmds.push(`git -C "${mainPath}" branch -D "${wt.branch}"`);
+    }
+    if (existsSync(statusFile)) {
+      cmds.push(`rm -f "${statusFile}"`);
+    }
+    return cmds.join("; ");
+  });
+
+  const pruneCommands = [...mainPaths].map(
+    (p) => `git -C "${p}" worktree prune`,
+  );
+  const script = [...perWorktree, ...pruneCommands].join("; ");
+  const child = spawn("bash", ["-c", script], {
+    detached: true,
+    stdio: "ignore",
+  });
+  child.unref();
 }
